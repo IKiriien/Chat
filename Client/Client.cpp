@@ -6,13 +6,13 @@
 #include <thread>
 #include <boost/asio.hpp>
 #include <boost/asio/ssl.hpp>
-#include "chat_message.hpp"
+#include "message.h"
 #include <condition_variable>
 #include <mutex>
 
 using boost::asio::ip::tcp;
 
-typedef std::deque<chat_message> chat_message_queue;
+typedef std::deque<message> chat_message_queue;
 
 class chat_client
 {
@@ -36,8 +36,8 @@ public:
     if (connection_state_ == CONNECTED)
     {
       std::cout << "Enter password: ";
-      chat_message msg(chat_message::REGISTER);
-      std::cin.getline(msg.body(), chat_message::max_body_length + 1);
+      message msg(message::REGISTER);
+      std::cin.getline(msg.body(), message::max_body_length + 1);
       msg.body_length(std::strlen(msg.body()));
       msg.encode_header();
       write(msg);
@@ -73,7 +73,7 @@ public:
     connect(endpoints);
   }
 
-  void write(const chat_message& msg)
+  void write(const message& msg)
   {
     boost::asio::post(io_context_,
         [this, msg]()
@@ -139,7 +139,7 @@ private:
   void do_read_header()
   {
     boost::asio::async_read(socket_,
-        boost::asio::buffer(read_msg_.data(), chat_message::header_length),
+        boost::asio::buffer(read_msg_.data(), message::header_length),
         [this](boost::system::error_code ec, std::size_t /*length*/)
         {
           if (!ec && read_msg_.decode_header())
@@ -161,11 +161,11 @@ private:
         {
           if (!ec)
           {
-            if (read_msg_.message_type() == chat_message::PROHIBITED)
+            if (read_msg_.message_type() == message::PROHIBITED)
             {
               notify_state(PROHIBITED);
             }
-            else if(read_msg_.message_type() == chat_message::AUTHORIZED)
+            else if(read_msg_.message_type() == message::AUTHORIZED)
             {
               notify_state(AUTHORIZED);
               do_read_header();
@@ -210,7 +210,7 @@ private:
 private:
   boost::asio::io_context& io_context_;
   boost::asio::ssl::stream<tcp::socket> socket_;
-  chat_message read_msg_;
+  message read_msg_;
   chat_message_queue write_msgs_;
   std::mutex mutex_;
   std::condition_variable cond_var_;
@@ -241,10 +241,10 @@ int main(int argc, char* argv[])
 
     if (c.isConnectionAuthorized())
     {
-      char line[chat_message::max_body_length + 1];
-      while (std::cin.getline(line, chat_message::max_body_length + 1))
+      char line[message::max_body_length + 1];
+      while (std::cin.getline(line, message::max_body_length + 1))
       {
-        chat_message msg;
+        message msg;
         msg.body_length(std::strlen(line));
         std::memcpy(msg.body(), line, msg.body_length());
         msg.encode_header();

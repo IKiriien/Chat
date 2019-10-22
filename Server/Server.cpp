@@ -7,13 +7,13 @@
 #include <utility>
 #include <boost/asio.hpp>
 #include <boost/asio/ssl.hpp>
-#include "chat_message.hpp"
+#include "message.h"
 
 using boost::asio::ip::tcp;
 
 //----------------------------------------------------------------------
 
-using chat_message_queue = std::deque<chat_message>;
+using chat_message_queue = std::deque<message>;
 
 //----------------------------------------------------------------------
 
@@ -21,7 +21,7 @@ class chat_participant
 {
 public:
   virtual ~chat_participant() {}
-  virtual void deliver(const chat_message& msg) = 0;
+  virtual void deliver(const message& msg) = 0;
 };
 
 typedef std::shared_ptr<chat_participant> chat_participant_ptr;
@@ -43,7 +43,7 @@ public:
     participants_.erase(participant);
   }
 
-  void deliver(const chat_message& msg)
+  void deliver(const message& msg)
   {
     recent_msgs_.push_back(msg);
     while (recent_msgs_.size() > max_recent_msgs)
@@ -80,7 +80,7 @@ public:
     do_handshake();
   }
 
-  void deliver(const chat_message& msg)
+  void deliver(const message& msg)
   {
     bool write_in_progress = !write_msgs_.empty();
     write_msgs_.push_back(msg);
@@ -109,7 +109,7 @@ private:
   {
     auto self(shared_from_this());
     boost::asio::async_read(socket_,
-        boost::asio::buffer(read_msg_.data(), chat_message::header_length),
+        boost::asio::buffer(read_msg_.data(), message::header_length),
         [this, self](boost::system::error_code ec, std::size_t /*length*/)
         {
           // std::cout << "Finished reading header." << std::endl;
@@ -140,7 +140,7 @@ private:
               // std::cout.write(read_msg_.body(), read_msg_.body_length());
               // std::cout << std::endl;
 
-              if (read_msg_.message_type() == chat_message::REGISTER &&
+              if (read_msg_.message_type() == message::REGISTER &&
                 strncmp(read_msg_.body(), "RingMediaServer", read_msg_.body_length()) == 0)
               {
                 do_authorized();
@@ -165,7 +165,7 @@ private:
 
   void do_prohibited()
   {
-    chat_message prohibited(chat_message::PROHIBITED);
+    message prohibited(message::PROHIBITED);
     prohibited.encode_header();
 
     boost::asio::async_write(socket_,
@@ -176,7 +176,7 @@ private:
 
   void do_authorized()
   {
-    chat_message authorized(chat_message::AUTHORIZED);
+    message authorized(message::AUTHORIZED);
     authorized.encode_header();
 
     auto self(shared_from_this());
@@ -226,7 +226,7 @@ private:
 
   boost::asio::ssl::stream<tcp::socket> socket_;
   chat_room& room_;
-  chat_message read_msg_;
+  message read_msg_;
   chat_message_queue write_msgs_;
   bool authorized_;
 };
