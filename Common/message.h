@@ -7,39 +7,39 @@
 class message
 {
 public:
-  static constexpr int header_length = 5;
-  static constexpr int max_body_length = 512;
+    static constexpr int header_length = 5;
+    static constexpr int max_body_length = 512;
 
-  enum type
-  {
-    REGISTER = '0', // Easy to debug
-    NAME,
-    AUTHORIZED,
-    PROHIBITED,
-    MESSAGE
-  };
+    enum type
+    {
+        REGISTER = '0', // Easy to debug
+        NAME,
+        AUTHORIZED,
+        PROHIBITED,
+        MESSAGE
+    };
 
-  message();
-  message(type message_type);
+    message();
+    message(type message_type);
 
-  const char* data() const;
-  char* data();
+    const char* data() const;
+    char* data();
 
-  std::size_t length() const;
+    std::size_t length() const;
 
-  const char* body() const;
-  char* body();
+    const char* body() const;
+    char* body();
 
-  std::size_t body_length() const;
-  void body_length(std::size_t new_length);
+    std::size_t body_length() const;
+    void body_length(std::size_t new_length);
 
-  bool decode_header();
-  void encode_header();
+    bool decode_header();
+    void encode_header();
 
-  type message_type();
+    type message_type();
 
 private:
-  char data_[header_length + max_body_length];
-  std::size_t body_length_;
-  type message_type_;
+    char data_[header_length + max_body_length];
+    std::size_t body_length_;
+    type message_type_;
 };

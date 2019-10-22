@@ -4,7 +4,7 @@ find_package(Threads REQUIRED)
 find_package(OpenSSL REQUIRED)
 find_package(Boost 1.70 COMPONENTS system thread REQUIRED)
 
-add_executable(Client ../Common/message.cpp Client.cpp)
+add_executable(Client ../Common/message.cpp client.cpp main.cpp)
 
 target_compile_features(Client PUBLIC cxx_std_17)
 target_compile_options(Client PRIVATE -Wall -Wextra -pedantic -Werror)
