@@ -1,4 +1,4 @@
-#include "message.h"
+#include "message.hpp"
 
 message::message()
     : body_length_(0)

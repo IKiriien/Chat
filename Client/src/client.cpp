@@ -1,4 +1,4 @@
-#include "client.h"
+#include "client.hpp"
 
 bool client::isConnectionAuthorized()
 {

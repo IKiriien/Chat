@@ -1,6 +1,6 @@
 #pragma once
 
-#include "message.h"
+#include "message.hpp"
 #include <boost/asio.hpp>
 #include <boost/asio/ssl.hpp>
 #include <condition_variable>
@@ -12,7 +12,7 @@
 #include <mutex>
 #include <thread>
 
-typedef std::deque<message> message_queue;
+using message_queue = std::deque<message>;
 
 class client
 {
