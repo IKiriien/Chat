@@ -60,7 +60,7 @@ void session::do_read_body()
             {
                 if (!authorized_)
                 {
-                    if (read_msg_.message_type() == message::REGISTER
+                    if (read_msg_.message_type() == message::type::REGISTER
                         && strncmp(read_msg_.body(), pwd_, read_msg_.body_length()) == 0)
                     {
                         do_authorized();
@@ -85,7 +85,7 @@ void session::do_read_body()
 
 void session::do_prohibited()
 {
-    message prohibited(message::PROHIBITED);
+    message prohibited(message::type::PROHIBITED);
     prohibited.encode_header();
 
     async_write(socket_, boost::asio::buffer(prohibited.data(), prohibited.length()),
@@ -94,7 +94,7 @@ void session::do_prohibited()
 
 void session::do_authorized()
 {
-    message authorized(message::AUTHORIZED);
+    message authorized(message::type::AUTHORIZED);
     authorized.encode_header();
 
     auto self(shared_from_this());

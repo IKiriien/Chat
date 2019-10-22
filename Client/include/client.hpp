@@ -28,12 +28,16 @@ class client
 public:
     bool isConnectionAuthorized();
 
+    void input_and_send_password();
+    void input_and_send_name();
+
     client(boost::asio::io_context& io_context, boost::asio::ssl::context& context,
         const boost::asio::ip::tcp::resolver::results_type& endpoints);
 
     void write(const message& msg);
 
 private:
+    void input_and_send(message& msg);
     static bool verify_certificate(bool preverified, boost::asio::ssl::verify_context&);
     void notify_state(state new_state);
     void connect(const boost::asio::ip::tcp::resolver::results_type& endpoints);

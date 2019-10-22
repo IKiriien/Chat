@@ -24,6 +24,8 @@ int main(int argc, char* argv[])
 
         if (c.isConnectionAuthorized())
         {
+            c.input_and_send_name();
+
             char line[message::max_body_length + 1];
             while (std::cin.getline(line, message::max_body_length + 1))
             {

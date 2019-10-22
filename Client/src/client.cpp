@@ -1,5 +1,27 @@
 #include "client.hpp"
 
+void client::input_and_send(message& msg)
+{
+    std::cin.getline(msg.body(), message::max_body_length + 1);
+    msg.body_length(std::strlen(msg.body()));
+    msg.encode_header();
+    write(msg);
+}
+
+void client::input_and_send_password()
+{
+    std::cout << "Enter password: ";
+    message msg(message::type::REGISTER);
+    input_and_send(msg);
+}
+
+void client::input_and_send_name()
+{
+    std::cout << "Enter your nick name: ";
+    message msg(message::type::NAME);
+    input_and_send(msg);
+}
+
 bool client::isConnectionAuthorized()
 {
     for (std::unique_lock<std::mutex> lock(mutex_); connection_state_ == NONE;)
@@ -7,31 +29,26 @@ bool client::isConnectionAuthorized()
         cond_var_.wait(lock);
     }
 
-    if (connection_state_ == CONNECTED)
-    {
-        std::cout << "Enter password: ";
-        message msg(message::REGISTER);
-        std::cin.getline(msg.body(), message::max_body_length + 1);
-        msg.body_length(std::strlen(msg.body()));
-        msg.encode_header();
-        write(msg);
-
-        for (std::unique_lock<std::mutex> lock(mutex_); connection_state_ == CONNECTED;)
-        {
-            cond_var_.wait(lock);
-        }
-
-        if (connection_state_ == PROHIBITED)
-        {
-            std::cout << "Connection prohibited by server!" << std::endl;
-        }
-    }
-    else
+    if (connection_state_ == FAILED)
     {
         std::cout << "Connect or handshake failed!" << std::endl;
+        return false;
     }
 
-    return (connection_state_ == AUTHORIZED);
+    input_and_send_password();
+
+    for (std::unique_lock<std::mutex> lock(mutex_); connection_state_ == CONNECTED;)
+    {
+        cond_var_.wait(lock);
+    }
+
+    if (connection_state_ == PROHIBITED)
+    {
+        std::cout << "Connection prohibited by server!" << std::endl;
+        return false;
+    }
+
+    return true;
 }
 
 client::client(boost::asio::io_context& io_context, boost::asio::ssl::context& context,
@@ -118,21 +135,33 @@ void client::do_read_body()
         [this](boost::system::error_code ec, std::size_t /*length*/) {
             if (!ec)
             {
-                if (read_msg_.message_type() == message::PROHIBITED)
+                switch (read_msg_.message_type())
                 {
+                case message::type::PROHIBITED:
                     notify_state(PROHIBITED);
-                }
-                else if (read_msg_.message_type() == message::AUTHORIZED)
-                {
+                    break;
+
+                case message::type::AUTHORIZED:
                     notify_state(AUTHORIZED);
                     do_read_header();
-                }
-                else
-                {
+                    break;
+
+                case message::type::NAME:
+                    std::cout.write(read_msg_.body(), read_msg_.body_length());
+                    std::cout << " joined chat" << std::endl;
+                    do_read_header();
+                    break;
+
+                case message::type::MESSAGE:
                     std::cout << "> ";
                     std::cout.write(read_msg_.body(), read_msg_.body_length());
                     std::cout << std::endl;
                     do_read_header();
+                    break;
+
+                default:
+                    std::cout << "Received unexpected message from server!" << std::endl;
+                    break;
                 }
             }
             else

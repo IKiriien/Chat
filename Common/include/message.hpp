@@ -10,7 +10,7 @@ public:
     static constexpr int header_length = 5;
     static constexpr int max_body_length = 512;
 
-    enum type
+    enum class type
     {
         REGISTER = '0', // Easy to debug
         NAME,
@@ -20,7 +20,7 @@ public:
     };
 
     message();
-    message(type message_type);
+    explicit message(type message_type);
 
     const char* data() const;
     char* data();
