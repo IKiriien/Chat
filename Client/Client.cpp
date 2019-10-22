@@ -16,23 +16,48 @@ typedef std::deque<chat_message> chat_message_queue;
 
 class chat_client
 {
+  enum state {
+    NONE,
+    CONNECTED,
+    FAILED,
+    AUTHORIZED,
+    PROHIBITED
+  };
+
 public:
 
   bool isConnectionAuthorized()
   {
-    std::cout << "Enter password: ";
-    chat_message msg(chat_message::REGISTER);
-    std::cin.getline(msg.body(), chat_message::max_body_length + 1);
-    msg.body_length(std::strlen(msg.body()));
-    msg.encode_header();
-    write(msg);
-
-    std::unique_lock<std::mutex> lock(mutex_);
-    while (validation_state_ == NONE)
+    for (std::unique_lock<std::mutex> lock(mutex_); connection_state_ == NONE;)
     {
       cond_var_.wait(lock);
     }
-    return (validation_state_ == AUTHORIZED);
+
+    if (connection_state_ == CONNECTED)
+    {
+      std::cout << "Enter password: ";
+      chat_message msg(chat_message::REGISTER);
+      std::cin.getline(msg.body(), chat_message::max_body_length + 1);
+      msg.body_length(std::strlen(msg.body()));
+      msg.encode_header();
+      write(msg);
+      
+      for (std::unique_lock<std::mutex> lock(mutex_); connection_state_ == CONNECTED;)
+      {
+        cond_var_.wait(lock);
+      }
+
+      if (connection_state_ == PROHIBITED)
+      {
+        std::cout << "Connection prohibited by server!" << std::endl;
+      }
+    }
+    else
+    {
+      std::cout << "Connect or handshake failed!" << std::endl;
+    }
+
+    return (connection_state_ == AUTHORIZED);
   }
 
   chat_client(boost::asio::io_context& io_context,
@@ -40,7 +65,7 @@ public:
       const tcp::resolver::results_type& endpoints)
     : io_context_(io_context),
       socket_(io_context, context),
-      validation_state_(NONE)
+      connection_state_(NONE)
   {
     socket_.set_verify_mode(boost::asio::ssl::verify_peer);
     socket_.set_verify_callback(verify_certificate);
@@ -70,6 +95,13 @@ private:
     return preverified;
   }
   
+  void notify_state(state new_state)
+  {
+    std::unique_lock<std::mutex> lock(mutex_);
+    connection_state_ = new_state;
+    cond_var_.notify_one();
+  }
+
   void connect(const tcp::resolver::results_type& endpoints)
   {
     boost::asio::async_connect(socket_.lowest_layer(), endpoints,
@@ -82,7 +114,7 @@ private:
           }
           else
           {
-            std::cout << "Connect failed: " << error.message() << "\n";
+            notify_state(FAILED);
           }
         });
   }
@@ -94,11 +126,12 @@ private:
         {
           if (!error)
           {
+            notify_state(CONNECTED);
             do_read_header();
           }
           else
           {
-            std::cout << "Handshake failed: " << error.message() << "\n";
+            notify_state(FAILED);
           }
         });
   }
@@ -130,24 +163,18 @@ private:
           {
             if (read_msg_.message_type() == chat_message::PROHIBITED)
             {
-              std::cout << "Connection prohibited by server!" << std::endl;
-
-              std::unique_lock<std::mutex> lock(mutex_);
-              validation_state_ = PROHIBITED;
-              cond_var_.notify_one();
+              notify_state(PROHIBITED);
             }
             else if(read_msg_.message_type() == chat_message::AUTHORIZED)
             {
-              std::cout << "Connection authorized!" << std::endl;
-
-              std::unique_lock<std::mutex> lock(mutex_);
-              validation_state_ = AUTHORIZED;
-              cond_var_.notify_one();
+              notify_state(AUTHORIZED);
+              do_read_header();
             }
             else
             {
+              std::cout << "> ";
               std::cout.write(read_msg_.body(), read_msg_.body_length());
-              std::cout << "\n";
+              std::cout << std::endl;
               do_read_header();
             }
           }
@@ -187,11 +214,7 @@ private:
   chat_message_queue write_msgs_;
   std::mutex mutex_;
   std::condition_variable cond_var_;
-  enum {
-    NONE,
-    AUTHORIZED,
-    PROHIBITED
-  } validation_state_;
+  state connection_state_;
 };
 
 int main(int argc, char* argv[])

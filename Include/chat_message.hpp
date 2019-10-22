@@ -76,7 +76,7 @@ public:
     std::strncat(header, data_ + 1, header_length - 1);
     body_length_ = std::atoi(header);
 
-    std::cout << "Decode header: " << data_[0] << header << std::endl;
+    // std::cout << "Decode header: " << data_[0] << header << std::endl;
 
     if (body_length_ > max_body_length)
     {
@@ -92,7 +92,7 @@ public:
     std::sprintf(header, "%c%4d", static_cast<char>(message_type_) ,static_cast<int>(body_length_));
     std::memcpy(data_, header, header_length);
 
-    std::cout << "Encode header: " << header << std::endl;
+    // std::cout << "Encode header: " << header << std::endl;
   }
 
   type message_type()

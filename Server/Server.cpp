@@ -112,6 +112,8 @@ private:
         boost::asio::buffer(read_msg_.data(), chat_message::header_length),
         [this, self](boost::system::error_code ec, std::size_t /*length*/)
         {
+          // std::cout << "Finished reading header." << std::endl;
+
           if (!ec && read_msg_.decode_header())
           {
             do_read_body();
@@ -188,7 +190,7 @@ private:
               room_.join(shared_from_this());
               authorized_ = true;
 
-              std::cout << "Autorization granted! Start async reading!" << std::endl;
+              // std::cout << "Autorization granted! Start async reading!" << std::endl;
 
               do_read_header();
             }
