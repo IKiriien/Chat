@@ -24,12 +24,12 @@ void client::input_and_send_name()
 
 bool client::isConnectionAuthorized()
 {
-    for (std::unique_lock<std::mutex> lock(mutex_); connection_state_ == NONE;)
+    for (std::unique_lock<std::mutex> lock(mutex_); connection_state_ == state::NONE;)
     {
         cond_var_.wait(lock);
     }
 
-    if (connection_state_ == FAILED)
+    if (connection_state_ == state::FAILED)
     {
         std::cout << "Connect or handshake failed!" << std::endl;
         return false;
@@ -37,12 +37,12 @@ bool client::isConnectionAuthorized()
 
     input_and_send_password();
 
-    for (std::unique_lock<std::mutex> lock(mutex_); connection_state_ == CONNECTED;)
+    for (std::unique_lock<std::mutex> lock(mutex_); connection_state_ == state::CONNECTED;)
     {
         cond_var_.wait(lock);
     }
 
-    if (connection_state_ == PROHIBITED)
+    if (connection_state_ == state::PROHIBITED)
     {
         std::cout << "Connection prohibited by server!" << std::endl;
         return false;
@@ -55,7 +55,7 @@ client::client(boost::asio::io_context& io_context, boost::asio::ssl::context& c
     const boost::asio::ip::tcp::resolver::results_type& endpoints)
     : io_context_(io_context)
     , socket_(io_context, context)
-    , connection_state_(NONE)
+    , connection_state_(state::NONE)
 {
     socket_.set_verify_mode(boost::asio::ssl::verify_peer);
     socket_.set_verify_callback(verify_certificate);
@@ -94,7 +94,7 @@ void client::connect(const boost::asio::ip::tcp::resolver::results_type& endpoin
             }
             else
             {
-                notify_state(FAILED);
+                notify_state(state::FAILED);
             }
         });
 }
@@ -104,12 +104,12 @@ void client::handshake()
     socket_.async_handshake(boost::asio::ssl::stream_base::client, [this](const boost::system::error_code& error) {
         if (!error)
         {
-            notify_state(CONNECTED);
+            notify_state(state::CONNECTED);
             do_read_header();
         }
         else
         {
-            notify_state(FAILED);
+            notify_state(state::FAILED);
         }
     });
 }
@@ -138,11 +138,11 @@ void client::do_read_body()
                 switch (read_msg_.message_type())
                 {
                 case message::type::PROHIBITED:
-                    notify_state(PROHIBITED);
+                    notify_state(state::PROHIBITED);
                     break;
 
                 case message::type::AUTHORIZED:
-                    notify_state(AUTHORIZED);
+                    notify_state(state::AUTHORIZED);
                     do_read_header();
                     break;
 

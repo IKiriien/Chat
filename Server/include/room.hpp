@@ -15,13 +15,14 @@ class room
     static constexpr char admin_user[] = "Admin";
     static constexpr char name_message_delimiter[] = "> ";
 
+    static constexpr int max_recent_msgs = 100;
+
 public:
     void join(participant_ptr participant);
     void leave(participant_ptr participant);
     void deliver(participant_ptr participant, const message& msg);
 
 private:
-    static constexpr int max_recent_msgs = 100;
     void deliver(const message& msg);
 
     std::set<participant_ptr> participants_;

@@ -16,7 +16,7 @@ using message_queue = std::deque<message>;
 
 class client
 {
-    enum state
+    enum class state
     {
         NONE,
         CONNECTED,
