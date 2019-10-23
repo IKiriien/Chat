@@ -3,5 +3,4 @@
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd $DIR
 
-./build/Client 10.0.2.15 4000
-
+./build/Client 127.0.0.1 4000
