@@ -23,6 +23,8 @@ void session::deliver(const message& msg)
     }
 }
 
+std::string session::name() const { return name_; }
+
 void session::do_handshake()
 {
     auto self(shared_from_this());
@@ -44,9 +46,9 @@ void session::do_read_header()
             {
                 do_read_body();
             }
-            else if (authorized_)
+            else
             {
-                room_.leave(shared_from_this());
+                room_.leave(self);
             }
         });
 }
@@ -72,13 +74,18 @@ void session::do_read_body()
                 }
                 else
                 {
-                    room_.deliver(read_msg_);
+                    if (read_msg_.message_type() == message::type::NAME)
+                    {
+                        name_ = std::string(read_msg_.body(), read_msg_.body() + read_msg_.body_length());
+                        room_.join(self);
+                    }
+                    room_.deliver(self, read_msg_);
                     do_read_header();
                 }
             }
-            else if (authorized_)
+            else
             {
-                room_.leave(shared_from_this());
+                room_.leave(self);
             }
         });
 }
@@ -88,8 +95,9 @@ void session::do_prohibited()
     message prohibited(message::type::PROHIBITED);
     prohibited.encode_header();
 
+    auto self(shared_from_this());
     async_write(socket_, boost::asio::buffer(prohibited.data(), prohibited.length()),
-        [](boost::system::error_code, std::size_t) {});
+        [self](boost::system::error_code, std::size_t) {});
 }
 
 void session::do_authorized()
@@ -102,13 +110,8 @@ void session::do_authorized()
         [this, self](boost::system::error_code ec, std::size_t) {
             if (!ec)
             {
-                room_.join(shared_from_this());
                 authorized_ = true;
                 do_read_header();
-            }
-            else if (authorized_)
-            {
-                room_.leave(shared_from_this());
             }
         });
 }
@@ -126,9 +129,9 @@ void session::do_write()
                     do_write();
                 }
             }
-            else if (authorized_)
+            else
             {
-                room_.leave(shared_from_this());
+                room_.leave(self);
             }
         });
 }

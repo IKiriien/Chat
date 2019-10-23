@@ -15,6 +15,9 @@ public:
 
     void start();
     void deliver(const message& msg);
+    virtual std::string name() const;
+
+    virtual ~session() = default;
 
 private:
     void do_handshake();
@@ -30,4 +33,5 @@ private:
     std::deque<message> write_msgs_;
     bool authorized_;
     static constexpr char pwd_[] = "RingMediaServer"; // Better store hash here
+    std::string name_;
 };

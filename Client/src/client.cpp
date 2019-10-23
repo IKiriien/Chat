@@ -153,7 +153,6 @@ void client::do_read_body()
                     break;
 
                 case message::type::MESSAGE:
-                    std::cout << "> ";
                     std::cout.write(read_msg_.body(), read_msg_.body_length());
                     std::cout << std::endl;
                     do_read_header();

@@ -36,7 +36,7 @@ public:
     bool decode_header();
     void encode_header();
 
-    type message_type();
+    type message_type() const;
 
 private:
     char data_[header_length + max_body_length];

@@ -53,4 +53,4 @@ void message::encode_header()
     std::memcpy(data_, header, header_length);
 }
 
-message::type message::message_type() { return message_type_; }
+message::type message::message_type() const { return message_type_; }

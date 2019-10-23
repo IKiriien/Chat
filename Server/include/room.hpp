@@ -14,10 +14,11 @@ class room
 public:
     void join(participant_ptr participant);
     void leave(participant_ptr participant);
-    void deliver(const message& msg);
+    void deliver(participant_ptr participant, const message& msg);
 
 private:
     static constexpr int max_recent_msgs = 100;
+    void deliver(const message& msg);
 
     std::set<participant_ptr> participants_;
     std::deque<message> recent_msgs_;
