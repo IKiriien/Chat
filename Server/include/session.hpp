@@ -10,6 +10,8 @@
 
 class session : public participant, public std::enable_shared_from_this<session>
 {
+    static constexpr char pwd_[] = "RingMediaServer"; // Better store hash here
+
 public:
     session(boost::asio::ip::tcp::socket socket, boost::asio::ssl::context& context, room& room);
 
@@ -32,6 +34,5 @@ private:
     message read_msg_;
     std::deque<message> write_msgs_;
     bool authorized_;
-    static constexpr char pwd_[] = "RingMediaServer"; // Better store hash here
     std::string name_;
 };

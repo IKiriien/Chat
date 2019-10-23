@@ -158,6 +158,10 @@ void client::do_read_body()
                     do_read_header();
                     break;
 
+                case message::type::KICK:
+                    std::cout << "Admin kicked you from server!" << std::endl;
+                    break;
+
                 default:
                     std::cout << "Received unexpected message from server!" << std::endl;
                     break;

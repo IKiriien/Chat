@@ -11,6 +11,10 @@ class room
 {
     using participant_ptr = std::shared_ptr<participant>;
 
+    static constexpr char kick_command[] = "@kick ";
+    static constexpr char admin_user[] = "Admin";
+    static constexpr char name_message_delimiter[] = "> ";
+
 public:
     void join(participant_ptr participant);
     void leave(participant_ptr participant);

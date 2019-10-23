@@ -16,7 +16,8 @@ public:
         NAME,
         AUTHORIZED,
         PROHIBITED,
-        MESSAGE
+        MESSAGE,
+        KICK
     };
 
     message();
