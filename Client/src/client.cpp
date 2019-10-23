@@ -22,7 +22,7 @@ void client::input_and_send_name()
     input_and_send(msg);
 }
 
-bool client::isConnectionAuthorized()
+bool client::is_connection_authorized()
 {
     for (std::unique_lock<std::mutex> lock(mutex_); connection_state_ == state::NONE;)
     {

@@ -26,7 +26,7 @@ class client
     };
 
 public:
-    bool isConnectionAuthorized();
+    bool is_connection_authorized();
 
     void input_and_send_password();
     void input_and_send_name();

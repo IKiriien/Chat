@@ -22,7 +22,7 @@ int main(int argc, char* argv[])
 
         std::thread t([&io_context]() { io_context.run(); });
 
-        if (c.isConnectionAuthorized())
+        if (c.is_connection_authorized())
         {
             c.input_and_send_name();
 
